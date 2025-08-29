@@ -18,6 +18,7 @@ add_executable(pipistrelle-usb-microphone
 	usb_microphone.c
 	main.cpp
 	analog_microphone.cpp
+        filter.cpp
 )
 
 target_include_directories(pipistrelle-usb-microphone PRIVATE
@@ -45,4 +46,4 @@ pico_enable_stdio_uart(pipistrelle-usb-microphone 1)
 pico_add_extra_outputs(pipistrelle-usb-microphone)
 
 # add url via pico_set_program_url
-example_auto_set_url(pipistrelle-usb-microphone)
+# example_auto_set_url(pipistrelle-usb-microphone)

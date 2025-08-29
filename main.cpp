@@ -211,8 +211,10 @@ int main(void)
     if (analog_mic == 0) failWithLEDs (0xaaaa);
     if (analog_mic->init(384000,28,&DMAhandler) < 0) failWithLEDs (0xcccc);
 
+#ifdef HPF_DEBUG
     analog_mic->setHPFcoeff(BATCOEFF);
-
+#endif
+    
     if (analog_mic->start() < 0) failWithLEDs (0xf0f0);
 
     usb_microphone_init();

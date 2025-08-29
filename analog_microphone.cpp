@@ -16,6 +16,7 @@
 #include "hardware/dma.h"
 #include "hardware/irq.h"
 
+#include "filter.hpp"
 #include "analog_microphone.hpp"
 
 #define FAKE_MIC 0
