@@ -10,8 +10,10 @@
 #define _PICO_ANALOG_MICROPHONE_HPP_
 
 #include "filter.hpp"
+#include "microphone.hpp"
 
-class analog_microphone {
+class analog_microphone : microphone {
+    public : 
     private :
     
     // for the startup pulses

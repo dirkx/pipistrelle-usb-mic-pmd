@@ -30,15 +30,17 @@
 #include "hardware/watchdog.h"
 #include "tusb.h"
 
+#include "microphone.hpp"
 #include "analog_microphone.hpp"
 
-analog_microphone *analog_mic = 0;
+microphone *_microphone = 0;
 
 extern "C" void DMAhandler();
 
 void DMAhandler ()
 {
-    if (analog_mic) analog_mic->dma_handler();
+    if (_microphone) 
+	_microphone->dma_handler();
 }
 
 int32_t gpios[11];
@@ -136,9 +138,9 @@ static short USBbuffer[512];
 
 void on_usb_microphone_tx_ready()
 {
-    while (analog_mic->buffered() < 384)
+    while (_microphone->buffered() < 384)
         ;
-    usb_microphone_write ( analog_mic->read ( USBbuffer, 384 ), 384 * sizeof(short));
+    usb_microphone_write ( _microphone->read ( USBbuffer, 384 ), 384 * sizeof(short));
 }
 
 int32_t BIRDCOEFF  = 1;
@@ -166,7 +168,7 @@ void Core1()
         if (bright <    0) bright = 0;
         
         // boost by 10 / 4
-        analog_mic->setLEDbrightness((bright * 10) >> 2);
+        _microphone->setLEDbrightness((bright * 10) >> 2);
         
         if (dt > 500000) {
             time0+=500000;
@@ -183,7 +185,7 @@ void Core1()
     }
     
     // turn LED off to minimize generated noise
-    analog_mic->setDriveLED(0);
+    _microphone->setDriveLED(0);
     
     while (1) {
         sleep_ms(100000);
@@ -203,19 +205,27 @@ int main(void)
     gpio_set_dir (23, GPIO_OUT);
     PSUquiet     (1);
 
-    analog_mic = new analog_microphone;
-    analog_mic->setDriveLED(1);
-    analog_mic->setGPIO(useLED);
+#if 1
+    _microphone = (microphone *) new analog_microphone;
+#else 
+    _microphone = new pdm_microphone();
+#endif
+    _microphone->setDriveLED(1);
+    _microphone->setGPIO(useLED);
     
     // use LED pattern o diagnose failure modes - won't work on PIPPYG!
-    if (analog_mic == 0) failWithLEDs (0xaaaa);
-    if (analog_mic->init(384000,28,&DMAhandler) < 0) failWithLEDs (0xcccc);
+    if (_microphone == 0) failWithLEDs (0xaaaa);
+#if 1
+    if (((analog_microphone*)_microphone)->init(384000,28,&DMAhandler) < 0) failWithLEDs (0xcccc);
+#else
+    if (((pdm_microphone*)_microphone)->init(384000,XX,XXX,&DMAhandler) < 0) failWithLEDs (0xcccc);
+#endif
 
 #ifdef HPF_DEBUG
-    analog_mic->setHPFcoeff(BATCOEFF);
+    _microphone->setHPFcoeff(BATCOEFF);
 #endif
     
-    if (analog_mic->start() < 0) failWithLEDs (0xf0f0);
+    if (_microphone->start() < 0) failWithLEDs (0xf0f0);
 
     usb_microphone_init();
     usb_microphone_set_tx_ready_handler(on_usb_microphone_tx_ready);
