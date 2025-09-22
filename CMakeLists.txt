@@ -8,25 +8,40 @@ cmake_minimum_required(VERSION 3.12)
 # note: this must happen before project()
 include(pico_sdk_import.cmake)
 
-project(pipistrelle-usb-microphone)
+project(pipistrelle-microphone)
 
 # initialize the Pico SDK
 pico_sdk_init()
 
-add_executable(pipistrelle-usb-microphone
+
+add_executable(analog-pipistrelle-usb-microphone
 	usb_descriptors.c
 	usb_microphone.c
 	main.cpp
-	analog_microphone.cpp
         filter.cpp
+	analog_microphone.cpp
 )
 
-target_include_directories(pipistrelle-usb-microphone PRIVATE
+target_compile_definitions(analog-pipistrelle-usb-microphone PRIVATE MICROPHONE=ANALOG)
+
+add_executable(pdm-pipistrelle-usb-microphone
+	usb_descriptors.c
+	usb_microphone.c
+	main.cpp
+        filter.cpp
+	pdm_microphone.cpp
+)
+
+target_compile_definitions(pdm-pipistrelle-usb-microphone PRIVATE MICROPHONE=PDM)
+
+foreach(target analog-pipistrelle-usb-microphone pdm-pipistrelle-usb-microphone)
+
+target_include_directories(${target} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}
     ${CMAKE_CURRENT_LIST_DIR}/src/include
 )
 
-target_link_libraries(pipistrelle-usb-microphone 
+target_link_libraries(${target}
 	pico_stdlib 
 	pico_platform 
 	pico_multicore 
@@ -39,11 +54,12 @@ target_link_libraries(pipistrelle-usb-microphone
 )
 
 # enable usb output, disable uart output
-pico_enable_stdio_usb(pipistrelle-usb-microphone  0)
-pico_enable_stdio_uart(pipistrelle-usb-microphone 1)
+pico_enable_stdio_usb(${target} 0)
+pico_enable_stdio_uart(${target} 1)
 
 # create map/bin/hex file etc.
-pico_add_extra_outputs(pipistrelle-usb-microphone)
+pico_add_extra_outputs(${target})
+endforeach()
 
 # add url via pico_set_program_url
 # example_auto_set_url(pipistrelle-usb-microphone)

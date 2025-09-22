@@ -9,6 +9,8 @@
 #ifndef _PICO_ANALOG_MICROPHONE_HPP_
 #define _PICO_ANALOG_MICROPHONE_HPP_
 
+#define ANALOG (0x616e616c)
+
 #include "filter.hpp"
 #include "microphone.hpp"
 

@@ -32,6 +32,7 @@
 
 #include "microphone.hpp"
 #include "analog_microphone.hpp"
+#include "pdm_microphone.hpp"
 
 microphone *_microphone = 0;
 
@@ -205,20 +206,22 @@ int main(void)
     gpio_set_dir (23, GPIO_OUT);
     PSUquiet     (1);
 
-#if 1
+#if MICROPHONE == ANALOG
     _microphone = (microphone *) new analog_microphone;
-#else 
-    _microphone = new pdm_microphone();
+#elif MICROPHONE == PDM
+    _microphone = (microphone*) new pdm_microphone();
+#else
+    #error "No microphone defined."
 #endif
     _microphone->setDriveLED(1);
     _microphone->setGPIO(useLED);
     
     // use LED pattern o diagnose failure modes - won't work on PIPPYG!
     if (_microphone == 0) failWithLEDs (0xaaaa);
-#if 1
+#if MICROPHONE == ANALOG
     if (((analog_microphone*)_microphone)->init(384000,28,&DMAhandler) < 0) failWithLEDs (0xcccc);
-#else
-    if (((pdm_microphone*)_microphone)->init(384000,XX,XXX,&DMAhandler) < 0) failWithLEDs (0xcccc);
+#elif  MICROPHONE == PDM
+//    if (((pdm_microphone*)_microphone)->init(384000,XX,XXX,&DMAhandler) < 0) failWithLEDs (0xcccc);
 #endif
 
 #ifdef HPF_DEBUG
