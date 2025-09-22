@@ -2,7 +2,6 @@
 
 Capture audio from a microphone on your [Raspberry Pi Pico](https://www.raspberrypi.org/products/raspberry-pi-pico/) or any [RP2040](https://www.raspberrypi.org/products/rp2040/) based board. 🎤
 
-
 ## Hardware
 
  * RP2040 board
@@ -60,6 +59,9 @@ cd build
 cmake .. -DPICO_BOARD=pico
 make
 ```
+
+Use pico2 or pico2_h for the rp2350 boards.
+
 4. Copy example `.uf2` to Pico when in BOOT mode.
 
 ## License
