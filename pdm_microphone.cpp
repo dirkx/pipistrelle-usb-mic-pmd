@@ -63,8 +63,15 @@ int16_t *pdm_microphone::read( int16_t* buffer, const int32_t samples) {
   int32_t n = (int16_t) min(samples, _buff_len - _buff_idx);
 
   if (n) {
-     for(size_t i = 0; i < n; i++, _buff_idx++)
+     for(size_t i = 0; i < n; i++, _buff_idx++) {
+	// expand the buffer into a format that
+	// is suitable to send as USB packets. This
+	// is a bit double - we could do this directly
+	// in the callback handler in pdm_receive to
+	// skip a loop.
+	//
 	buffer[i] = _buffer[_buff_idx] * 200; // from uint8 to a int16
+     };
 
      if (_buff_idx == _buff_len)
 	_buff_idx = _buff_len = 0;

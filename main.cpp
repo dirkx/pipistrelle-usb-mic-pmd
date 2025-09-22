@@ -227,7 +227,9 @@ int main(void)
     gpio_set_dir (23, GPIO_OUT);
 
     _microphone = (microphone *) new analog_microphone;
+    printf("Wired to the analog microphone/AD converter\n");
 #elif MICROPHONE == PDM
+    printf("Wired to the PDM microphone\n");
     _microphone = (microphone*) new pdm_microphone(384000,GPIO_DAT,GPIO_CLK,&DMAhandler);
 #else
     #error "No microphone defined."
