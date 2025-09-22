@@ -19,6 +19,7 @@ add_executable(analog-pipistrelle-usb-microphone
 	usb_microphone.c
 	main.cpp
         filter.cpp
+	microphone.cpp
 	analog_microphone.cpp
 )
 
@@ -29,6 +30,7 @@ add_executable(pdm-pipistrelle-usb-microphone
 	usb_microphone.c
 	main.cpp
         filter.cpp
+	microphone.cpp
         pdm_receiver.c
         pdm_receiver.pio
 	pdm_microphone.cpp
@@ -57,8 +59,8 @@ target_link_libraries(${target}
 )
 
 # enable usb output, disable uart output
-pico_enable_stdio_usb(${target} 0)
-pico_enable_stdio_uart(${target} 1)
+# pico_enable_stdio_usb(${target} 0)
+# pico_enable_stdio_uart(${target} 1)
 
 # create map/bin/hex file etc.
 pico_add_extra_outputs(${target})

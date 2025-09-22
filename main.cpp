@@ -30,35 +30,40 @@
 #include "hardware/watchdog.h"
 #include "tusb.h"
 
+#include "usb_microphone.hpp"
+
 #include "microphone.hpp"
 #include "analog_microphone.hpp"
 #include "pdm_microphone.hpp"
 
-microphone *_microphone = 0;
-
-extern "C" void DMAhandler();
-
+// extern "C" void DMAhandler();
 
 #if MICROPHONE == PDM
-#define GPIO_DAT (12) // must be in base 0
-#define GPIO_CLK (13) // must be clock capable
-#endif
 
-#if MICROPHONE == ANALOG
-#define GPIO_AD_MIC (26)
+	#define GPIO_DAT (12) // must be in base 0
+	#define GPIO_CLK (13) // must be clock capable
+	pdm_microphone *_microphone = NULL;
+
+#elif MICROPHONE == ANALOG
+
+	#define GPIO_AD_MIC (26)
+	analog_microphone *_microphone = NULL;
+
+#else
+	#error "No microphone type defined"
 #endif
 
 #if MICROPHONE == ANALOG
 void DMAhandler ()
 {
     if (_microphone) 
-	((analog_microphone*)_microphone)->dma_handler();
+	_microphone->dma_handler();
 }
 #elif MICROPHONE == PDM
 void DMAhandler (uint8_t *buffer, size_t len)
 {
     if (_microphone) 
-	((pdm_microphone*)_microphone)->dma_handler(buffer,len);
+	_microphone->dma_handler(buffer,len);
 }
 #endif
 
@@ -82,13 +87,13 @@ int32_t LED_init ()
 
 void LEDpattern (int v)
 {
+    printf("LED patter %x\n", v);
     for (int i=0;i<10;i++) {
         gpio_put(gpios[i], v&1);
         v>>=1;
     }
 }
 
-#include "usb_microphone.hpp"
 
 // callback functions
 extern "C" void on_usb_microphone_tx_ready();
@@ -213,10 +218,13 @@ void Core1()
 
 int main(void)
 {
+    // setCPUclock(108000); // seems to minimize energy bands
+
+    stdio_init_all();
+    printf("i\n\nStarting %s " __DATE__ " " __TIME__ "\n", rindex(__FILE__,'/')+1);
+
     int32_t iter = 0;
 
-    setCPUclock(108000); // seems to minimize energy bands
-    
     int32_t useLED = LED_init();
     LEDpattern(0x0);
 
@@ -226,36 +234,52 @@ int main(void)
     gpio_init    (23);
     gpio_set_dir (23, GPIO_OUT);
 
-    _microphone = (microphone *) new analog_microphone;
+    _microphone = new analog_microphone();
     printf("Wired to the analog microphone/AD converter\n");
 #elif MICROPHONE == PDM
+printf("%s:%d\n",__FILE__,__LINE__);
+printf("%s:%d DAT:%u CLK:%u\n",__FILE__,__LINE__, GPIO_DAT, GPIO_CLK);
+    _microphone = new pdm_microphone(384000,GPIO_DAT,GPIO_CLK,&DMAhandler);
     printf("Wired to the PDM microphone\n");
-    _microphone = (microphone*) new pdm_microphone(384000,GPIO_DAT,GPIO_CLK,&DMAhandler);
 #else
     #error "No microphone defined."
 #endif
 
+printf("%s:%d\n",__FILE__,__LINE__);
     // use LED pattern o diagnose failure modes - won't work on PIPPYG!
     if (_microphone == 0) failWithLEDs (0xaaaa);
 
+printf("%s:%d\n",__FILE__,__LINE__);
     _microphone->setDriveLED(1);
+printf("%s:%d\n",__FILE__,__LINE__);
     _microphone->setGPIO(useLED);
+printf("%s:%d\n",__FILE__,__LINE__);
     
 #if MICROPHONE == ANALOG
-    if (((analog_microphone*)_microphone)->init(384000,28,&DMAhandler) < 0) failWithLEDs (0xcccc);
+    if (_microphone->init(384000,28,&DMAhandler) < 0) failWithLEDs (0xcccc);
+printf("%s:%d\n",__FILE__,__LINE__);
 #endif
 
+printf("%s:%d\n",__FILE__,__LINE__);
 #ifdef HPF_DEBUG
     _microphone->setHPFcoeff(BATCOEFF);
+printf("%s:%d\n",__FILE__,__LINE__);
 #endif
     
-    if (_microphone->start() < 0) failWithLEDs (0xf0f0);
+printf("%s:%d\n",__FILE__,__LINE__);
+    if (_microphone->start() < 0) 
+	failWithLEDs (0xf0f0);
 
+printf("%s:%d\n",__FILE__,__LINE__);
+    printf("Init of USB..");
     usb_microphone_init();
     usb_microphone_set_tx_ready_handler(on_usb_microphone_tx_ready);
-    
+   
+   printf("Launch core 1"); 
     multicore_launch_core1(&Core1 );
-    
+   
+    printf("Going into the main loop..");
+ 
     while (1) {
         usb_microphone_task();
     }

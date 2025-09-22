@@ -120,6 +120,8 @@ analog_microphone::init(const int32_t sampleRate,
                         C_DMA_handler pDMAhandler )
 {
     DMAhandler = pDMAhandler;
+
+    filterInit (12);
     
     dma_channel = dma_claim_unused_channel(true);
     

@@ -31,11 +31,15 @@
 uint8_t * _buffer;
 
 pdm_microphone::pdm_microphone(
-                const int32_t sampleRate,
-                const int32_t gpio_dat,
-                const int32_t gpio_clk, 
+                uint sampleRate,
+                uint gpio_dat,
+                uint gpio_clk, 
                 C_DMA_handler pDMAhandler )
 {
+  _gpio_dat = gpio_dat;
+  _gpio_clk = gpio_clk;
+  _sampleRate = sampleRate;
+
   size_t nSamples = sampleRate / 1000;  // 1000 USB blocks per second.
 
   _buff_size = 4 * nSamples;
@@ -45,7 +49,9 @@ pdm_microphone::pdm_microphone(
   _buff_len = 0;
   _buff_idx = 0;
 
+  printf("INit PDM: ");
   init_pdm_receiver(pDMAhandler, _gpio_dat, _gpio_clk, nSamples, Q);
+  printf("Ok\n");
 
   return;
 }

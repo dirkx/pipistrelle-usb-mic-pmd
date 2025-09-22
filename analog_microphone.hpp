@@ -17,6 +17,7 @@
 class analog_microphone : microphone {
     public : 
     typedef void (*C_DMA_handler)();
+    analog_microphone() {};
 
     private :
     
@@ -74,11 +75,6 @@ class analog_microphone : microphone {
                     const int32_t gpio,
                     C_DMA_handler pDMAhandler );
         
-    analog_microphone()
-    {
-        filterInit (12);
-    }
-    
     // reduce noise and current burn by turning LED off altogether after a few seconds
     int driveLED = 1;
     void    setDriveLED(int on) { driveLED = on; };

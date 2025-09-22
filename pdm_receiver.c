@@ -99,38 +99,50 @@ void receiver_clock_start(uint pin_clk, uint64_t sampleBitRate) {
     clock_gpio_init(pin_clk, CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_VALUE_CLK_USB, usb_div);
 }
 
-void init_pdm_receiver(void (*received_cb)(uint8_t * buff, size_t len), int pin_dat, int pin_clk, size_t len, uint Q) {
+void init_pdm_receiver(void (*received_cb)(uint8_t * buff, size_t len), uint pin_dat, uint pin_clk, size_t len, uint Q) {
+printf("%s:%d DAT:%u CLK:%u\n",__FILE__,__LINE__, pin_dat, pin_clk);
+
     hard_assert(Q >= 1);
     hard_assert(Q <= 255); // max that fits in a byte (0 to 255 bits; 256 bits would not fit)
-
+printf("%s:%d\n",__FILE__,__LINE__);
     // len - number of samples of Q bits
     //
     size_t nbits = Q * len;
+printf("%s:%d\n",__FILE__,__LINE__);
     n32words_rx = len / 4; // Each count is 8 bits
     buffer_rx = aligned_malloc(4*n32words_rx, 4096); 
+printf("%s:%d\n",__FILE__,__LINE__);
     hard_assert(buffer_rx);
+printf("%s:%d\n",__FILE__,__LINE__);
     count_buffer = malloc(len); // every count is returned as a byte
     hard_assert(count_buffer);
+printf("%s:%d\n",__FILE__,__LINE__);
 
     bzero(buffer_rx, 4 * n32words_rx);
+printf("%s:%d\n",__FILE__,__LINE__);
 
     _received_cb = received_cb;
-    pio = pio1;
-    // bool pio_claim_free_sm_and_add_program (const pio_program_t *program, PIO *pio, uint *sm, uint *offset)
-    offset = pio_add_program(pio, &receiver_program);
-    sm = pio_claim_unused_sm(pio, true);
+    bool pok = pio_claim_free_sm_and_add_program(&receiver_program, &pio, &sm, &offset);
+    hard_assert(pok);
+printf("%s:%d\n",__FILE__,__LINE__);
 
     pio_set_gpio_base(pio,0); // using 0 ..31
+printf("%s:%d\n",__FILE__,__LINE__);
     receiver_program_init(pio, sm, offset, pin_dat, pin_clk, Q);
+printf("%s:%d\n",__FILE__,__LINE__);
 
     irq_add_shared_handler(dma_get_irq_num(DMA_IRQ_TO_USE), dma_irq_handler, DMA_IRQ_PRIORITY);
+printf("%s:%d\n",__FILE__,__LINE__);
     irq_set_enabled(dma_get_irq_num(DMA_IRQ_TO_USE), true);
+printf("%s:%d\n",__FILE__,__LINE__);
 
     dma_channel_config config_rx;
     dma_channel_rx = dma_claim_unused_channel(true);
     config_rx = dma_channel_get_default_config(dma_channel_rx);
+printf("%s:%d\n",__FILE__,__LINE__);
 
     channel_config_set_transfer_data_size(&config_rx, DMA_SIZE_32);
+printf("%s:%d\n",__FILE__,__LINE__);
 
     channel_config_set_read_increment(&config_rx, false); // do not increment; FIFO
     channel_config_set_write_increment(&config_rx, true); 
@@ -138,6 +150,7 @@ void init_pdm_receiver(void (*received_cb)(uint8_t * buff, size_t len), int pin_
     // Wire DMA to FIFO
     channel_config_set_dreq(&config_rx, pio_get_dreq(pio, sm, false /* is rx */));
 
+printf("%s:%d\n",__FILE__,__LINE__);
 #if 0
     channel_config_set_ring(
         &config_rx, 

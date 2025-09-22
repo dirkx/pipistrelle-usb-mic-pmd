@@ -14,14 +14,13 @@
 
 class microphone {
     public :
-       void setLEDbrightness (const int32_t bright10 ) {};
-       void setDriveLED(int on) {};
-       void setGPIO(const int g) {};
+       microphone();
+       void setLEDbrightness (const int32_t bright10 );
+       void setDriveLED(int on);
+       void setGPIO(const int g);
 
        virtual int start();
-
        virtual int16_t *read(int16_t* buffer, const int32_t samples);
-    
        virtual int32_t buffered();
 };
 #endif

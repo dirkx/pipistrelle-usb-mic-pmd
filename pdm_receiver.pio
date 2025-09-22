@@ -39,14 +39,20 @@ continue:
 
 % c-sdk {
 static inline void receiver_program_init(PIO pio, uint sm, uint offset, uint pin_dat, uint pin_clk, uint64_t Q) {
+printf("%s:%d DAT:%u CLK:%u\n",__FILE__,__LINE__, pin_dat, pin_clk);
     pio_gpio_init(pio, pin_dat);
+printf("%s:%d\n",__FILE__,__LINE__);
     pio_gpio_init(pio, pin_clk);
+printf("%s:%d\n",__FILE__,__LINE__);
     pio_gpio_init(pio, 6);
-
+printf("%s:%d\n",__FILE__,__LINE__);
     pio_sm_config c = receiver_program_get_default_config(offset);
+printf("%s:%d\n",__FILE__,__LINE__);
 
     sm_config_set_jmp_pin(&c, pin_dat); 	// wire JMP to dat
+printf("%s:%d\n",__FILE__,__LINE__);
     sm_config_set_set_pins(&c, 6,1);		// sync pin
+printf("%s:%d\n",__FILE__,__LINE__);
 
     sm_config_set_in_shift(
         &c,
@@ -54,11 +60,15 @@ static inline void receiver_program_init(PIO pio, uint sm, uint offset, uint pin
         true,  // Autopush enabled
         32     // Autopush threshold = 8 ???
     );
+printf("%s:%d\n",__FILE__,__LINE__);
 
     sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_RX);
+printf("%s:%d\n",__FILE__,__LINE__);
     sm_config_set_clkdiv(&c, 1);
+printf("%s:%d\n",__FILE__,__LINE__);
 
     pio_sm_init(pio, sm, offset, &c);
+printf("%s:%d\n",__FILE__,__LINE__);
 }
 
 %}

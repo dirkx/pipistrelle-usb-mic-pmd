@@ -19,9 +19,9 @@ class pdm_microphone : microphone {
        typedef void (*C_DMA_handler)(uint8_t * buffer, size_t len);
 
        pdm_microphone(
-		const int32_t sampleRate, 
-		const int32_t gpio_dat, 
-		const int32_t gpio_clk, 
+		uint sampleRate, 
+		uint gpio_dat, 
+		uint gpio_clk, 
 		C_DMA_handler pDMAhandler );
   
        void setLEDbrightness (const int32_t bright10 ) {};
