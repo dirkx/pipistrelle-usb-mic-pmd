@@ -28,7 +28,6 @@
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
 
-
 uint8_t * _buffer;
 
 pdm_microphone::pdm_microphone(

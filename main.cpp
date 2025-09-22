@@ -39,6 +39,15 @@ microphone *_microphone = 0;
 extern "C" void DMAhandler();
 
 
+#if MICROPHONE == PDM
+#define GPIO_DAT (12) // must be in base 0
+#define GPIO_CLK (13) // must be clock capable
+#endif
+
+#if MICROPHONE == ANALOG
+#define GPIO_AD_MIC (26)
+#endif
+
 #if MICROPHONE == ANALOG
 void DMAhandler ()
 {
@@ -219,7 +228,7 @@ int main(void)
 
     _microphone = (microphone *) new analog_microphone;
 #elif MICROPHONE == PDM
-    _microphone = (microphone*) new pdm_microphone(384000,1,13,&DMAhandler);
+    _microphone = (microphone*) new pdm_microphone(384000,GPIO_DAT,GPIO_CLK,&DMAhandler);
 #else
     #error "No microphone defined."
 #endif
@@ -232,8 +241,6 @@ int main(void)
     
 #if MICROPHONE == ANALOG
     if (((analog_microphone*)_microphone)->init(384000,28,&DMAhandler) < 0) failWithLEDs (0xcccc);
-#elif  MICROPHONE == PDM
-//    if (((pdm_microphone*)_microphone)->init(384000,XX,XXX,&DMAhandler) < 0) failWithLEDs (0xcccc);
 #endif
 
 #ifdef HPF_DEBUG
