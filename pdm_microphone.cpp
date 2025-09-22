@@ -16,23 +16,73 @@
 #include "hardware/dma.h"
 #include "hardware/irq.h"
 
+#include "pdm_receiver.h"
+
 #include "filter.hpp"
 #include "microphone.hpp"
 #include "pdm_microphone.hpp"
 
-pdm_microphone::pdm_microphone() {};
+#define Q (8)
+
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+
+
+uint8_t * _buffer;
+
+pdm_microphone::pdm_microphone(
+                const int32_t sampleRate,
+                const int32_t gpio_dat,
+                const int32_t gpio_clk, 
+                C_DMA_handler pDMAhandler )
+{
+  size_t nSamples = sampleRate / 1000;  // 1000 USB blocks per second.
+
+  _buff_size = 4 * nSamples;
+  _buffer = (uint8_t*)malloc(_buff_size);
+  hard_assert(_buffer);
+
+  _buff_len = 0;
+  _buff_idx = 0;
+
+  init_pdm_receiver(pDMAhandler, _gpio_dat, _gpio_clk, nSamples, Q);
+
+  return;
+}
   
 int pdm_microphone::start() { 
-	return 0; 
+  receiver_clock_start(_gpio_clk,_sampleRate);
+  return 0; 
 };
 
+// Read from our buffer until it is empty; then reset it - so
+// we're not doig round robin - but simply wait until it is
+// empty.
+//
 int16_t *pdm_microphone::read( int16_t* buffer, const int32_t samples) { 
-	return 0;
+  int32_t n = (int16_t) min(samples, _buff_len - _buff_idx);
+
+  if (n) {
+     for(size_t i = 0; i < n; i++, _buff_idx++)
+	buffer[i] = _buffer[_buff_idx] * 200; // from uint8 to a int16
+
+     if (_buff_idx == _buff_len)
+	_buff_idx = _buff_len = 0;
+  };
+
+  return buffer;
 };
     
 int32_t pdm_microphone::buffered() { 
-	return 0;
+  return _buff_len - _buff_idx;
 };
 
-void    pdm_microphone::dma_handler() {
+// Append to our buffer until we are full.
+//
+void pdm_microphone::dma_handler(uint8_t * buff, size_t len) {
+  len = min(len, _buff_size - _buff_len);
+  memcpy(_buffer + _buff_len, buff, len);
+  _buff_len += len;
+  return;
 };

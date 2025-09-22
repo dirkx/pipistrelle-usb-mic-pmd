@@ -1,0 +1,64 @@
+.pio_version 0 // only requires PIO version 0
+
+; See also https://github.com/raspberrypi/pico-examples/blob/master/dma/channel_irq/pio_serialiser.pio
+;
+
+; This program operates a clock and then reads a bit
+; each time the pin goes low
+;
+; DAT is in pin 0
+; CLK is side-set pin 0
+
+; Count the number of bits; once we have 8 (or some other Q level), pass them on.
+;
+.program receiver
+    set pindirs, 1     ; Set sycn pinto output
+
+wrap_target:
+    set x, 7 		; readout counter (Q = 8, x = Q-1)
+    set y, 0		; count of the bits set to one in Q,
+
+q_loop:
+    wait 1 gpio 13 	; make sure we've completed the previous cycle.
+    wait 0 gpio 13 [2]  ; wait for the clock to go low; and add some extra cycles 
+		        ; to well clear the Tren = 18 ns delay (see table 2 in the
+			; datasheet of the MP34DT01 microphone).
+    jmp pin isHigh
+    set pins, 0		; copy what we see onto the out pins
+    jmp continue
+
+isHigh:
+    set pins, 1		; copy what we see onto the out pins
+    jmp y-- continue 	; count the number of ones
+
+continue:
+    jmp x-- q_loop	; loop until we've done Q = x + 1 clocks
+
+    in y, 8    		; for Q=16 and Q=8 - the result will fit in 4 bits.
+.wrap			; reset the Q counter.
+
+% c-sdk {
+static inline void receiver_program_init(PIO pio, uint sm, uint offset, uint pin_dat, uint pin_clk, uint64_t Q) {
+    pio_gpio_init(pio, pin_dat);
+    pio_gpio_init(pio, pin_clk);
+    pio_gpio_init(pio, 6);
+
+    pio_sm_config c = receiver_program_get_default_config(offset);
+
+    sm_config_set_jmp_pin(&c, pin_dat); 	// wire JMP to dat
+    sm_config_set_set_pins(&c, 6,1);		// sync pin
+
+    sm_config_set_in_shift(
+        &c,
+        true,  // Shift-to-right
+        true,  // Autopush enabled
+        32     // Autopush threshold = 8 ???
+    );
+
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_RX);
+    sm_config_set_clkdiv(&c, 1);
+
+    pio_sm_init(pio, sm, offset, &c);
+}
+
+%}

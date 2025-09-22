@@ -16,7 +16,13 @@
 
 class pdm_microphone : microphone {
     public :
-       pdm_microphone();
+       typedef void (*C_DMA_handler)(uint8_t * buffer, size_t len);
+
+       pdm_microphone(
+		const int32_t sampleRate, 
+		const int32_t gpio_dat, 
+		const int32_t gpio_clk, 
+		C_DMA_handler pDMAhandler );
   
        void setLEDbrightness (const int32_t bright10 ) {};
        void setDriveLED(int on) {};
@@ -24,9 +30,15 @@ class pdm_microphone : microphone {
 
        int start();
 
-       int16_t *read( int16_t* buffer, const int32_t samples);
+       int16_t *read(int16_t* buffer, const int32_t samples);
     
        int32_t buffered();
-       void    dma_handler();
+       void dma_handler(uint8_t * buff, size_t len);
+    private:
+       C_DMA_handler DMAhandler;
+       uint _gpio_dat, _gpio_clk;
+       size_t _buff_len, _buff_idx, _buff_size;
+       uint8_t * _buff;
+       int32_t _sampleRate;
 };
 #endif

@@ -16,12 +16,12 @@
 
 class analog_microphone : microphone {
     public : 
+    typedef void (*C_DMA_handler)();
+
     private :
     
     // for the startup pulses
     int32_t persistentBrightness = 0;
-    
-    typedef void (*C_DMA_handler)();
     
     int32_t PWMLEDvalue = 0;
     int32_t PWMLEDerror = 0;

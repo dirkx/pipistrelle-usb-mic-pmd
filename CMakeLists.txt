@@ -29,8 +29,11 @@ add_executable(pdm-pipistrelle-usb-microphone
 	usb_microphone.c
 	main.cpp
         filter.cpp
+        pdm_receiver.c
+        pdm_receiver.pio
 	pdm_microphone.cpp
 )
+pico_generate_pio_header(pdm-pipistrelle-usb-microphone ${CMAKE_CURRENT_LIST_DIR}/pdm_receiver.pio)
 
 target_compile_definitions(pdm-pipistrelle-usb-microphone PRIVATE MICROPHONE=PDM)
 

@@ -38,11 +38,20 @@ microphone *_microphone = 0;
 
 extern "C" void DMAhandler();
 
+
+#if MICROPHONE == ANALOG
 void DMAhandler ()
 {
     if (_microphone) 
-	_microphone->dma_handler();
+	((analog_microphone*)_microphone)->dma_handler();
 }
+#elif MICROPHONE == PDM
+void DMAhandler (uint8_t *buffer, size_t len)
+{
+    if (_microphone) 
+	((pdm_microphone*)_microphone)->dma_handler(buffer,len);
+}
+#endif
 
 int32_t gpios[11];
 
@@ -202,22 +211,25 @@ int main(void)
     int32_t useLED = LED_init();
     LEDpattern(0x0);
 
-    gpio_init    (23);
-    gpio_set_dir (23, GPIO_OUT);
     PSUquiet     (1);
 
 #if MICROPHONE == ANALOG
+    gpio_init    (23);
+    gpio_set_dir (23, GPIO_OUT);
+
     _microphone = (microphone *) new analog_microphone;
 #elif MICROPHONE == PDM
-    _microphone = (microphone*) new pdm_microphone();
+    _microphone = (microphone*) new pdm_microphone(384000,1,13,&DMAhandler);
 #else
     #error "No microphone defined."
 #endif
+
+    // use LED pattern o diagnose failure modes - won't work on PIPPYG!
+    if (_microphone == 0) failWithLEDs (0xaaaa);
+
     _microphone->setDriveLED(1);
     _microphone->setGPIO(useLED);
     
-    // use LED pattern o diagnose failure modes - won't work on PIPPYG!
-    if (_microphone == 0) failWithLEDs (0xaaaa);
 #if MICROPHONE == ANALOG
     if (((analog_microphone*)_microphone)->init(384000,28,&DMAhandler) < 0) failWithLEDs (0xcccc);
 #elif  MICROPHONE == PDM
